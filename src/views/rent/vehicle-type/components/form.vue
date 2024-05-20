@@ -26,43 +26,50 @@ const validate = reactive({
 })
 
 // 级联选择
-const parentIdArray = ref([])
+const vehicleConfig = ref([])
 
 // 树形结构选择 -- 层级
 const options = ref([])
+
+// 重置信息
+function resetInfo() {
+  // 清除数据
+  vehicleConfig.value = [];
+  formRef?.value?.resetFields();
+}
+
 // 展示弹框
-function show(title, row) {
+function show(title, row, addFlag) {
   _dialogVisible.value = true;
   _dialogTitle.value = title;
   nextTick(() => {
-    if (row.id) {
+    resetInfo();
+    if (!addFlag) {
       // 获取级联选择信息
       getVehicleTypeList();
       echoData(row);
     }else {
       getVehicleTypeList();
+      let config = row.ancestors + "," + row.id;
+      vehicleConfig.value = config.split(",").map(Number);
     }
   })
 }
 // 关闭弹框
 function hide() {
-  // 清除数据
-  parentIdArray.value.length = 0;
-  formRef?.value.resetFields();
+  resetInfo();
   _dialogVisible.value = false;
 }
 // 回显信息
 function echoData(row) {
   // 赋值
-  console.log(row.ancestors.split(","))
-  parentIdArray.value = row.ancestors.split(",");
-  parentIdArray.value = parentIdArray.value.map(Number);
+  vehicleConfig.value = row.ancestors.split(",");
+  vehicleConfig.value = vehicleConfig.value.map(Number);
   formData.id = row.id;
   formData.type = row.type;
   formData.name = row.name;
   formData.orderNum = row.orderNum;
   formData.remark = row.remark;
-
 }
 
 // 获取车辆类型信息
@@ -126,9 +133,9 @@ function optionNotice(message, type) {
   })
 }
 
-watch(() => parentIdArray.value, () => {
-  formData.parentId = parentIdArray.value?.at(parentIdArray.value.length - 1);
-  formData.ancestors = parentIdArray.value?.join(",");
+watch(() => vehicleConfig.value, () => {
+  formData.parentId = vehicleConfig.value?.at(vehicleConfig.value.length - 1);
+  formData.ancestors = vehicleConfig.value?.join(",");
 })
 
 defineExpose({show, hide})
@@ -142,7 +149,7 @@ defineExpose({show, hide})
     <!-- 表单  -->
     <el-form ref="formRef" :model="formData" :rules="validate" label-width="auto" style="max-width: 600px">
       <el-form-item label="上级配置" prop="parentId">
-        <el-cascader v-model="parentIdArray"
+        <el-cascader v-model="vehicleConfig"
                      :options="options"
                      :show-all-levels="false"
                      clearable

@@ -1,6 +1,6 @@
 <script setup name="VehicleForm">
 import {listVehicleType} from "@/api/rent/vehicle-type.js"
-import {addVehicle} from "@/api/rent/vehicle.js"
+import {addVehicle, getVehicle, editVehicle} from "@/api/rent/vehicle.js"
 import {Plus} from "@element-plus/icons-vue";
 import Principal from "@/views/rent/vehicle/components/principal.vue"
 import {ElMessage} from "element-plus";
@@ -37,17 +37,35 @@ const options = ref([])
 // 车辆配置
 const vehicleConfig = ref([])
 // 车辆图片
-const pictureMap = ref({});
+const pictureList = ref([]);
 
 // 负责人选择模块
 const PrincipalTable = ref(null);
 // 负责人昵称
 const principalName = ref('');
 
+// 重置信息
+function resetInfo() {
+  // 清除数据
+  formRef?.value?.resetFields();
+  pictureList.value.length = 0;
+  vehicleConfig.value.length = 0;
+  principalName.value = '';
+}
+
 // 展示dialog
 function show(title, payload) {
   _title.value = title
   _visible.value = true;
+  resetInfo();
+  if (payload) {
+    // 获取车辆信息
+    getVehicle(payload).then(res => {
+      if (res.code === 200) {
+        echoData(res.data);
+      }
+    })
+  }
 }
 // 关闭dialog
 function hide() {
@@ -62,16 +80,15 @@ function selectPrincipal() {
 function receiveValue(value) {
   formData.principalId = value.userId;
   principalName.value = value.nickName;
-  console.log(formData)
 }
 
 // 上传图片
 function uploadImage(image) {
   getBase64(image.file).then(res => {
-    pictureMap.value = {
-      ...pictureMap.value,
-      [image.file.uid]: res
-    }
+    pictureList.value.push({
+      uid: image.file.uid,
+      url: res
+    });
   })
 }
 // 获取图片转base64
@@ -93,11 +110,18 @@ function getBase64(file) {
 }
 // 移除图片
 function removeImage(image) {
-  Reflect.deleteProperty(pictureMap, image.uid)
+  for (let i = 0; i < pictureList.value.length; i++) {
+    if (image.uid === pictureList.value.at(i).uid) {
+      pictureList.value.splice(i, 1);
+    }
+  }
 }
-// 赋值表单数据
+// 赋值表单图片数据
 function setVehicleImages() {
-  const allImages = Object.values(pictureMap.value);
+  let allImages = [];
+  pictureList.value.map(picture => {
+    allImages.push(picture.url);
+  })
   formData.vehicleImg = allImages.join('|')
 }
 
@@ -108,24 +132,69 @@ function submitForm() {
     if (valid) {
       setVehicleImages();
       // 调用接口
-      addVehicle(formData).then(res => {
-        if (res.code === 200) {
-          // 提示
-          ElMessage({
-            message: "车辆信息添加成功",
-            type: "success"
-          })
-          // 清除数据
-          formRef?.value.resetFields();
-          pictureMap.value = {};
-          // 关闭组件
-          hide();
-          // 刷新父组件
-          emit("refreshParent");
-        }
-      })
+      if (formData.id) {
+        editVehicle(formData).then(res => {
+          if (res.code === 200) {
+            noticeAndRefresh("车辆信息修改成功")
+          }
+        })
+      }else {
+        addVehicle(formData).then(res => {
+          if (res.code === 200) {
+            noticeAndRefresh("车辆信息添加成功")
+          }
+        })
+      }
     }
   })
+}
+// 提交表单后续操作 - 重置信息
+function noticeAndRefresh(title) {
+  // 提示
+  ElMessage({
+    message: title,
+    type: "success"
+  })
+  // 清除信息
+  resetInfo();
+  // 关闭组件
+  hide();
+  // 刷新父组件
+  emit("refreshParent");
+}
+
+// 回显信息
+function echoData(row) {
+  formData.id = row.id;
+  formData.plateNumber = row.plateNumber;
+  formData.frameNumber = row.frameNumber;
+  formData.price = row.price;
+  formData.brandId = row.brandId;
+  formData.modelId = row.modelId;
+  formData.colorId = row.colorId;
+  formData.deviceId = row.deviceId;
+  formData.principalId = row.principalId;
+  formData.purchaseTime = row.purchaseTime;
+  formData.vehicleImg = row.vehicleImg;
+  formData.remark = row.remark;
+  // 回显图片
+  row?.vehicleImg?.split("|").map(img => {
+    if (img) {
+      pictureList.value?.push({url: img})
+    }
+  });
+  // 回显配置
+  if(row.brandId) {
+    vehicleConfig.value.push(Number(row.brandId));
+  }
+  if(row.modelId) {
+    vehicleConfig.value.push(Number(row.modelId));
+  }
+  if (row.colorId) {
+    vehicleConfig.value.push(Number(row.colorId));
+  }
+  // 回显负责人名称
+  principalName.value = row.principalName;
 }
 
 watch(() => vehicleConfig.value, () => {
@@ -223,6 +292,7 @@ defineExpose({show, hide})
       <el-form-item label="车辆图片">
         <el-upload
             :limit="6"
+            :file-list="pictureList"
             :http-request="uploadImage"
             :on-remove="removeImage"
             list-type="picture-card">
@@ -243,7 +313,7 @@ defineExpose({show, hide})
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="hide">取消</el-button>
-        <el-button type="primary" @click=" submitForm">确定</el-button>
+        <el-button type="primary" @click="submitForm">确定</el-button>
       </div>
     </template>
   </el-dialog>
