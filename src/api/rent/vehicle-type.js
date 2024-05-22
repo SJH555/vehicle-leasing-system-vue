@@ -31,3 +31,10 @@ export function delVehicleType(id) {
         method: 'delete'
     })
 }
+// 获取指定车辆信息
+export function infoVehicleType(id) {
+    return request({
+        url: `rent/vehicle/type/${id}`,
+        method: "get"
+    })
+}

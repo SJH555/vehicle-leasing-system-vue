@@ -78,20 +78,14 @@ function getVehicleList(query) {
 function handleQuery() {
   getVehicleList(queryParams);
 }
-
 // 重置查询条件
 function clearQueryParams() {
   queryRef.value?.resetFields();
   purchaseTime.value = [];
 }
 
-// 分页 --- 单页数据量变化
-function handleSizeChange() {
-  getVehicleList(queryParams);
-}
-
-// 分页 --- 页码跳转
-function handleCurrentChange() {
+// 分页查询
+function handlePaginationChange() {
   getVehicleList(queryParams);
 }
 
@@ -99,19 +93,16 @@ function handleCurrentChange() {
 function addVehicleInfo() {
   formRef.value?.show('新增车辆信息', null)
 }
-
 // 修改车辆信息
 function editVehicleInfo() {
-  formRef?.value.show("修改车辆信息", ids.value.at(0));
+  formRef?.value.show("修改车辆信息", ids.value.at(0), true);
 }
-
 // 导出车辆信息
 function exportVehicleInfo() {
   proxy.download("rent/vehicle/export", {
     queryParams,
   }, `vehicle_${new Date().getTime()}.xlsx`);
 }
-
 // 删除车辆信息
 function deleteVehicleInfo() {
   ElMessageBox.confirm(
@@ -146,10 +137,15 @@ function deleteVehicleInfo() {
 // 选中数据
 function selectionChange(selection) {
   // 修改按钮状态
-  atMostOne.value = selection.length > 1;
+  atMostOne.value = selection.length !== 1;
   atLeastOne.value = selection.length <= 0;
   // 设置id信息
   ids.value = selection.map(item => item.id)
+}
+
+// 详情信息
+function vehicleDetail(row) {
+  formRef?.value.show("车辆信息详情", row, false)
 }
 
 // 刷新组件
@@ -255,6 +251,11 @@ watch([() => purchaseTime.value, () => vehicleConfig.value], (newValue) => {
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="操作" align="center">
+        <template #default="scope">
+          <el-button type="primary" text @click="vehicleDetail(scope.row)">详情</el-button>
+        </template>
+      </el-table-column>
     </el-table>
     <!--  分页  -->
     <div class="demo-pagination-block">
@@ -265,8 +266,8 @@ watch([() => purchaseTime.value, () => vehicleConfig.value], (newValue) => {
           :background="true"
           layout="->, total, sizes, prev, pager, next, jumper"
           :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+          @size-change="handlePaginationChange"
+          @current-change="handlePaginationChange"
       />
     </div>
     <!-- 新增、修改组件 -->

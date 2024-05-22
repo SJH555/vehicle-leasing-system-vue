@@ -28,12 +28,12 @@ function clearQueryParams() {
 }
 
 // 新增
-function addVehicleType(row) {
-  formRef?.value.show("新增车辆配置信息", row, true);
+function addVehicleType(row, config) {
+  formRef?.value.show("新增车辆配置信息", row, config);
 }
 // 修改
 function updateVehicleType(row) {
-  formRef?.value.show("修改车辆信息", row);
+  formRef?.value.show("修改车辆信息", row, null);
 }
 // 删除
 function deleteVehicleType(row) {
@@ -93,7 +93,7 @@ onMounted(() => {
       </el-form-item>
     </el-form>
 
-    <el-button type="primary" plain icon="Plus" class="options" @click="addVehicleType">新增</el-button>
+    <el-button type="primary" plain icon="Plus" class="options" @click="addVehicleType(null)">新增</el-button>
 
     <!-- 列表数据 -->
     <el-table :data="tableData"
@@ -112,7 +112,7 @@ onMounted(() => {
       <el-table-column label="操作" width="350px" align="center">
         <template #default="scope">
           <el-space :size="-4">
-            <el-button type="primary" icon="Plus" text @click="addVehicleType(scope.row)">新增</el-button>
+            <el-button v-if="scope.row.type !== 2" type="primary" icon="Plus" text @click="addVehicleType(null, scope.row)">新增</el-button>
             <el-button plain icon="Edit" text @click="updateVehicleType(scope.row)">修改</el-button>
             <el-button type="danger" plain icon="Delete" @click="deleteVehicleType(scope.row)" text>删除</el-button>
           </el-space>
