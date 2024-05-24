@@ -15,7 +15,7 @@ import directive from './directive' // directive
 
 // 注册指令
 import plugins from './plugins' // plugins
-import { download } from '@/utils/request'
+import {download, upload} from '@/utils/request'
 
 // svg图标
 import 'virtual:svg-icons-register'
@@ -49,6 +49,7 @@ const app = createApp(App)
 // 全局方法挂载
 app.config.globalProperties.useDict = useDict
 app.config.globalProperties.download = download
+app.config.globalProperties.upload = upload
 app.config.globalProperties.parseTime = parseTime
 app.config.globalProperties.resetForm = resetForm
 app.config.globalProperties.handleTree = handleTree

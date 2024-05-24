@@ -42,7 +42,6 @@ const rules = reactive({
     trigger: "blur"
   }],
   price: [{required: true, message: "租赁价格不能为空", trigger: "blur"}, {
-    type: 'number',
     pattern: "^-?\\d+(\\.\\d+)?$",
     message: "格式错误",
     trigger: "blur"
@@ -228,7 +227,7 @@ function echoData(row) {
   formData.id = row.id;
   formData.plateNumber = row.plateNumber;
   formData.frameNumber = row.frameNumber;
-  formData.price = row.price;
+  formData.price = row.price?.toString();
   formData.brandId = row.brandId;
   formData.modelId = row.modelId;
   formData.colorId = row.colorId;
@@ -288,7 +287,7 @@ defineExpose({show, hide})
         </el-col>
         <el-col :span="12">
           <el-form-item label="租赁价格" prop="price">
-            <el-input v-model="formData.price" placeholder="租赁价格" :maxlength="10" :readonly="_isDisable"/>
+            <el-input v-model="formData.price" placeholder="租赁价格" type="text" :maxlength="10" :readonly="_isDisable"/>
           </el-form-item>
         </el-col>
         <el-col :span="12">
