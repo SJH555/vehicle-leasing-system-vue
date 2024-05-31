@@ -184,7 +184,6 @@ function setVehicleImages() {
 
 // 提交表单
 function submitForm() {
-  console.log(typeof formData.price)
   // 表单校验
   formRef?.value.validate(valid => {
     if (valid) {

@@ -1,7 +1,11 @@
 <script setup>
 import {ArrowDown, ArrowUp} from "@element-plus/icons-vue";
-import {listCustomer} from "@/api/rent/customer.js"
+import {listCustomer, deleteCustomer} from "@/api/rent/customer.js"
 import CustomerForm from "@/views/rent/customer/components/form.vue"
+import {ElMessage, ElMessageBox} from "element-plus";
+import {useRouter} from "vue-router";
+
+let router = useRouter();
 
 // 查询表单相关
 const queryParams = reactive({
@@ -70,6 +74,49 @@ function addOption() {
   formRef?.value.show("新增客户信息");
 }
 
+function editOption() {
+  formRef?.value.show("修改客户信息", ids.value.at(0))
+}
+
+function deleteOption() {
+  // 确认
+  ElMessageBox.confirm(
+      "是否要删除选中的客户信息",
+      "系统提示",
+      {
+        confirmButtonText: "确认",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+  ).then(() => {
+    deleteCustomer(ids.value).then(res => {
+      if(res.code === 200) {
+        ElMessage({
+          message: "成功删除客户信息",
+          type: "warning"
+        })
+        getCustomerList();
+      }
+    })
+  }).catch(() => {
+    ElMessage({
+      message: "取消删除操作",
+      type: "info"
+    })
+  })
+}
+
+function customerDetail(row) {
+  formRef?.value.detail("客户信息详情", row.id)
+}
+
+function lease(row) {
+  router.replace({
+    path: "/lease/order",
+    state: {id: row.id}
+  })
+}
+
 function selectionChange(selection) {
   atMostOne.value = selection.length !== 1;
   atLeastOne.value = selection.length < 1;
@@ -77,6 +124,10 @@ function selectionChange(selection) {
 }
 
 function handlePaginationChange() {
+  getCustomerList();
+}
+
+function refreshParent() {
   getCustomerList();
 }
 
@@ -145,9 +196,9 @@ onMounted(() => {
     <!--  操作  -->
     <el-space :size="15" class="option">
       <el-button type="primary" plain icon="Plus" @click="addOption">新增</el-button>
-      <el-button type="success" plain icon="Edit" :disabled="atMostOne">修改</el-button>
+      <el-button type="success" plain icon="Edit" @click="editOption" :disabled="atMostOne">修改</el-button>
       <el-button type="warning" plain icon="Download">导出</el-button>
-      <el-button type="danger" plain icon="Delete" :disabled="atLeastOne">删除</el-button>
+      <el-button type="danger" plain icon="Delete" @click="deleteOption" :disabled="atLeastOne">删除</el-button>
     </el-space>
 
     <!-- 列表数据  -->
@@ -172,7 +223,10 @@ onMounted(() => {
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center">
-        <el-button text type="primary">详情</el-button>
+        <template #default="scope">
+          <el-button text type="primary" @click="customerDetail(scope.row)">详情</el-button>
+          <el-button text type="primary" @click="lease(scope.row)">租车</el-button>
+        </template>
       </el-table-column>
     </el-table>
 
@@ -188,7 +242,7 @@ onMounted(() => {
           @size-change="handlePaginationChange"
           @current-change="handlePaginationChange"/>
     </div>
-    <CustomerForm ref="formRef"/>
+    <CustomerForm ref="formRef" @refreshParent="refreshParent"/>
   </div>
 </template>
 

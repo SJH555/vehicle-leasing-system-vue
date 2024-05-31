@@ -159,10 +159,10 @@ export function download(url, params, filename, config) {
 export function upload(files, url) {
 
     let formData = new FormData();
-    console.log(files)
-    files.forEach(file => {
-        formData.append("files", file)
-    })
+    // files.forEach(file => {
+    //     formData.append("files", file.raw)
+    // })
+    formData.append("files", files.file)
     // 使用同步方法返回参数 否则获取返回值时接口还没执行完成
     return service.post(url, formData, {
         headers: {
